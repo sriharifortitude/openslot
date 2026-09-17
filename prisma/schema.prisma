@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// One business per deployment in this version; the model is shaped so that a
+// businessId could be added to every row later without restructuring.
+model Business {
+  id       String @id @default(uuid()) @db.Uuid
+  name     String
+  // IANA zone. Every opening-hours rule is wall-clock time in this zone.
+  timeZone String
+  currency String @default("EUR")
+  // Slots starting sooner than this from "now" are not offered.
+  leadMinutes Int @default(60)
+
+  hours    OpeningHours[]
+  services Service[]
+
+  @@map("businesses")
+}
+
+model OpeningHours {
+  id         String @id @default(uuid()) @db.Uuid
+  businessId String @db.Uuid
+  // ISO: 1 = Monday ... 7 = Sunday
+  dayOfWeek  Int
+  opens      String
+  closes     String
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, dayOfWeek])
+  @@map("opening_hours")
+}
+
+model Service {
+  id              String  @id @default(uuid()) @db.Uuid
+  businessId      String  @db.Uuid
+  // Keyed by locale so the API returns the customer's language.
+  name            Json
+  description     Json?
+  durationMinutes Int
+  bufferMinutes   Int     @default(0)
+  priceMinor      Int
+  active          Boolean @default(true)
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("services")
+}
+
+enum BookingStatus {
+  confirmed
+  cancelled
+}
+
+model Booking {
+  id        String        @id @default(uuid()) @db.Uuid
+  // Short, human-readable, shown to the customer.
+  reference String        @unique
+  serviceId String        @db.Uuid
+  startsAt  DateTime
+  endsAt    DateTime
+  status    BookingStatus @default(confirmed)
+  // Customer data: kept to what the appointment needs, deleted with it.
+  customerName  String
+  customerEmail String
+  customerNotes String?
+  locale        String
+  createdAt     DateTime @default(now())
+  cancelledAt   DateTime?
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  // The double-booking guard. Two confirmed bookings cannot share a service
+  // and start instant. Overlap of unequal durations is prevented by the slot
+  // grid: every offered start is on the grid and every booking is validated
+  // against the grid before insert, so equal-start is the only collision
+  // the database has to refuse -- and it refuses it atomically.
+  @@unique([serviceId, startsAt, status], map: "one_confirmed_booking_per_slot")
+  @@index([startsAt])
+  @@map("bookings")
+}
