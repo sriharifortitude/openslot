@@ -1,0 +1,7 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: openslot-postgres
+    environment: { POSTGRES_USER: openslot, POSTGRES_PASSWORD: openslot_local_dev, POSTGRES_DB: openslot }
+    ports: ["127.0.0.1:5435:5432"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U openslot -d openslot"], interval: 2s, timeout: 3s, retries: 20 }
