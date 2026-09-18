@@ -87,8 +87,10 @@ The decisions that shaped the code are in `docs/adr/`:
 - **No multi-tenancy.** One business per deployment. Services and hours
   carry a `businessId` so the model can grow, but nothing enforces
   isolation and `GET /api/business` returns the first row.
-- **No rate limiting on `POST /api/bookings`.** A reverse proxy's job in
-  deployment; noted so it is not forgotten.
+- **No rate limiting.** `POST /api/bookings` and the reference lookup and
+  cancel routes need it; the reference is drawn from the CSPRNG with about
+  2^40 possibilities, which resists guessing but not indefinitely. A
+  reverse proxy's job in deployment; noted so it is not forgotten.
 - **Overlapping-but-not-identical starts** across services in the same
   millisecond are not caught by the unique index. ADR 4 explains the
   window and the `EXCLUDE` constraint that would close it.
