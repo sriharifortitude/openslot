@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto';
+
 import { PrismaClient } from '@prisma/client';
 import { Hono } from 'hono';
 import { Temporal } from 'temporal-polyfill';
@@ -32,11 +34,17 @@ function localised(value: unknown, locale: Locale): string {
  */
 const iso = (date: Date): string => Temporal.Instant.fromEpochMilliseconds(date.getTime()).toString();
 
-/** Six characters, no ambiguous glyphs. Read out over the phone. */
+/**
+ * The reference is the only credential for looking up or cancelling a
+ * booking, so it is drawn from the CSPRNG. Eight characters from a
+ * 32-glyph alphabet with no 0/O/1/I is about 2^40: readable over the phone,
+ * not enumerable online. Rate limiting the lookup and cancel routes at the
+ * proxy is still expected and is listed in the README.
+ */
 function reference(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let out = '';
-  for (let i = 0; i < 6; i += 1) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  for (let i = 0; i < 8; i += 1) out += alphabet[randomInt(alphabet.length)];
   return out;
 }
 
