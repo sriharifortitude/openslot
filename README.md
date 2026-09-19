@@ -92,7 +92,9 @@ The decisions that shaped the code are in `docs/adr/`:
 - **No rate limiting.** `POST /api/bookings` and the reference lookup and
   cancel routes need it; the reference is drawn from the CSPRNG with about
   2^40 possibilities, which resists guessing but not indefinitely. A
-  reverse proxy's job in deployment; noted so it is not forgotten.
+  reverse proxy's job in deployment —
+  [gatelimit](https://github.com/sriharifortitude/gatelimit) keyed by IP
+  on `/api/bookings` — noted so it is not forgotten.
 - **Overlapping-but-not-identical starts** across services in the same
   millisecond are not caught by the unique index. ADR 4 explains the
   window and the `EXCLUDE` constraint that would close it.
