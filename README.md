@@ -1,5 +1,7 @@
 # openslot
 
+[![CI](https://github.com/sriharifortitude/openslot/actions/workflows/ci.yml/badge.svg)](https://github.com/sriharifortitude/openslot/actions/workflows/ci.yml)
+
 An appointment-booking page for a single practice or studio, built so that
 it can be bought by a European business after June 2025 — which means it
 has to be usable with a keyboard and a screen reader, read correctly in
